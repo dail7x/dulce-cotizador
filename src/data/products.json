@@ -1,0 +1,105 @@
+{
+  "products": [
+    {
+      "id": "lemon-pie",
+      "nombre": "Lemon Pie Clásico",
+      "descripcion": "Base de masa sablee crocante, crema de limón suave y un abundante merengue italiano dorado a la perfección.",
+      "categoria": "tortas",
+      "precio": 14000,
+      "tipoPrecio": "fijo",
+      "imagen": "/images/lemon-pie.png",
+      "aptoCelicos": false,
+      "diasAnticipacion": 2,
+      "personalizable": false
+    },
+    {
+      "id": "torta-personalizada",
+      "nombre": "Torta Personalizada de Cumpleaños",
+      "descripcion": "Armá la torta de tus sueños. Elegí el tamaño, sabor de bizcochuelo, rellenos premium y decoraciones especiales.",
+      "categoria": "tortas",
+      "precio": 18000,
+      "tipoPrecio": "dinamico",
+      "imagen": "/images/torta-personalizada.png",
+      "aptoCelicos": false,
+      "diasAnticipacion": 4,
+      "personalizable": true,
+      "tamanos": [
+        {"nombre": "Chica (10-12 porciones)", "precio": 18000},
+        {"nombre": "Mediana (18-20 porciones)", "precio": 26000},
+        {"nombre": "Grande (26-30 porciones)", "precio": 35000}
+      ],
+      "rellenos": [
+        {"nombre": "Dulce de Leche Repostero clásico", "precio": 0},
+        {"nombre": "Crema Chantilly suave", "precio": 0},
+        {"nombre": "Frutillas de Estación caramelizadas", "precio": 1500},
+        {"nombre": "Nutella premium con chocolate", "precio": 2500},
+        {"nombre": "Crema Bariloche con nueces", "precio": 2000}
+      ],
+      "disenos": [
+        {"nombre": "Diseño Estándar (Drip cake o buttercream simple)", "precio": 0},
+        {"nombre": "Diseño Decorado Especial (Flores naturales o macarons)", "precio": 3000},
+        {"nombre": "Diseño Temático Modelado (Fondant o figuras personalizadas)", "precio": 6000}
+      ]
+    },
+    {
+      "id": "muffins-premium",
+      "nombre": "Box de Muffins Premium x6",
+      "descripcion": "Esponjosos muffins rellenos de arándanos frescos silvestres y terminados con un crocante crumble de vainilla.",
+      "categoria": "muffins",
+      "precio": 6500,
+      "tipoPrecio": "fijo",
+      "imagen": "/images/muffins-premium.png",
+      "aptoCelicos": false,
+      "diasAnticipacion": 1,
+      "personalizable": false
+    },
+    {
+      "id": "budin-limon-amapolas",
+      "nombre": "Budín de Limón y Amapolas",
+      "descripcion": "Budín súper húmedo e intenso de limón natural con semillas de amapola, terminado con un glaseado real traslúcido.",
+      "categoria": "budines",
+      "precio": 5500,
+      "tipoPrecio": "fijo",
+      "imagen": "/images/budin-limon.png",
+      "aptoCelicos": false,
+      "diasAnticipacion": 1,
+      "personalizable": false
+    },
+    {
+      "id": "torta-frutos-rojos-sg",
+      "nombre": "Torta Sacher Apta Celíacos",
+      "descripcion": "Torta de chocolate belga húmeda, rellena con mermelada artesanal de damascos, cubierta con ganache de chocolate amargo. Libre de gluten.",
+      "categoria": "tortas",
+      "precio": 22000,
+      "tipoPrecio": "fijo",
+      "imagen": "/images/torta-sacher-sg.png",
+      "aptoCelicos": true,
+      "diasAnticipacion": 3,
+      "personalizable": false
+    },
+    {
+      "id": "muffins-manzana-sg",
+      "nombre": "Muffins de Manzana y Canela Sin TACC",
+      "descripcion": "Box de 6 muffins húmedos elaborados con harina de almendras, puré de manzana natural y un toque de canela. Libres de gluten.",
+      "categoria": "muffins",
+      "precio": 7200,
+      "tipoPrecio": "fijo",
+      "imagen": "/images/muffins-manzana-sg.png",
+      "aptoCelicos": true,
+      "diasAnticipacion": 2,
+      "personalizable": false
+    },
+    {
+      "id": "pedido-evento-especial",
+      "nombre": "Pedidos Especiales o Bodas",
+      "descripcion": "Tortas de bodas de varios pisos, mesas de dulces completas y diseños hiper-personalizados en base a tu temática.",
+      "categoria": "tortas",
+      "precio": 0,
+      "tipoPrecio": "cotizar",
+      "imagen": "/images/evento-especial.png",
+      "aptoCelicos": false,
+      "diasAnticipacion": 15,
+      "personalizable": true
+    }
+  ]
+}

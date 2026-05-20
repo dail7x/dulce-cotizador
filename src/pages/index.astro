@@ -1,0 +1,1425 @@
+---
+import Layout from '../layouts/Layout.astro';
+import productsData from '../data/products.json';
+const products = productsData.products;
+
+// Teléfono ficticio de la repostera (puede cambiarse en el futuro)
+const WHATSAPP_PHONE = "5491123456789"; 
+---
+
+<Layout>
+  <!-- Cabecera / Navbar -->
+  <header class="header">
+    <div class="container header-container">
+      <div class="logo-area">
+        <img src="/images/logo.png" alt="Los Dulces de Rosa Logo" class="brand-logo-img" />
+        <div class="logo-text">
+          <span class="brand-name">Los Dulces de Rosa</span>
+          <span class="brand-subtitle">Repostería</span>
+        </div>
+      </div>
+      <a href="#contacto" class="btn btn-secondary btn-header">Contacto</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-container animate-fade-in-up">
+      <span class="hero-tagline">Hecho con amor y los mejores ingredientes</span>
+      <h1 class="hero-title">Tentación en cada porción</h1>
+      <p class="hero-description">
+        Descubrí nuestro catálogo artesanal de tortas premium, muffins y budines húmedos. Cotizá tu torta personalizada en tiempo real y coordiná el pedido directo por WhatsApp.
+      </p>
+      <div class="hero-actions">
+        <a href="#catalogo" class="btn btn-primary">Explorar Catálogo</a>
+        <a href="#cotizador-torta-personalizada" class="btn btn-secondary" id="btn-hero-customize">Cotizar Torta a Medida</a>
+      </div>
+      
+      <!-- Badges de seguridad/confianza -->
+      <div class="hero-badges">
+        <div class="hero-badge-item">
+          <span class="badge-icon">🌿</span>
+          <span>Apto Celíacos</span>
+        </div>
+        <div class="hero-badge-item">
+          <span class="badge-icon">🗓️</span>
+          <span>Pedidos Anticipados</span>
+        </div>
+        <div class="hero-badge-item">
+          <span class="badge-icon">🍓</span>
+          <span>100% Fresco</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catálogo -->
+  <section id="catalogo" class="catalog-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-tag">Nuestras Delicias</span>
+        <h2 class="section-title">Elige tu Favorito</h2>
+        <div class="section-line"></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">Todos</button>
+        <button class="filter-tab" data-filter="tortas">Tortas</button>
+        <button class="filter-tab" data-filter="muffins">Muffins</button>
+        <button class="filter-tab" data-filter="budines">Budines</button>
+        <button class="filter-tab filter-tab-celiac" data-filter="celiac">Apto Celíacos ✨</button>
+      </div>
+
+      <!-- Grilla de Productos -->
+      <div class="products-grid">
+        {products.map((product) => (
+          <div 
+            class="card product-card" 
+            data-category={product.categoria}
+            data-celiac={product.aptoCelicos ? "true" : "false"}
+            data-id={product.id}
+          >
+            <div class="product-image-container">
+              <img src={product.imagen} alt={product.nombre} class="product-image" loading="lazy" />
+              {product.aptoCelicos && (
+                <span class="badge badge-celiac product-badge">Sin TACC</span>
+              )}
+            </div>
+            
+            <div class="product-content">
+              <div class="product-meta">
+                <span class="product-advance">
+                  ⏱️ Min. {product.diasAnticipacion} {product.diasAnticipacion === 1 ? 'día' : 'días'}
+                </span>
+                {product.tipoPrecio === 'fijo' && (
+                  <span class="badge badge-standard">Precio Fijo</span>
+                )}
+                {product.tipoPrecio === 'dinamico' && (
+                  <span class="badge badge-custom">Cotizador Dinámico</span>
+                )}
+                {product.tipoPrecio === 'cotizar' && (
+                  <span class="badge badge-custom">A Pedido</span>
+                )}
+              </div>
+              
+              <h3 class="product-card-title">{product.nombre}</h3>
+              <p class="product-card-desc">{product.descripcion}</p>
+              
+              <div class="product-footer">
+                <div class="product-price-box">
+                  {product.tipoPrecio === 'cotizar' ? (
+                    <span class="price-quote">Bajo Cotización</span>
+                  ) : (
+                    <>
+                      <span class="price-label">{product.tipoPrecio === 'dinamico' ? 'Desde' : 'Precio'}</span>
+                      <span class="price-value">${product.precio.toLocaleString('es-AR')}</span>
+                    </>
+                  )}
+                </div>
+                
+                <button 
+                  class="btn btn-primary btn-sm btn-order-action"
+                  data-id={product.id}
+                  data-price-type={product.tipoPrecio}
+                >
+                  {product.tipoPrecio === 'dinamico' ? 'Personalizar' : 
+                   product.tipoPrecio === 'cotizar' ? 'Consultar' : 'Pedir'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal del Cotizador Dinámico / Personalizador -->
+  <div class="modal-backdrop" id="modal-cotizador">
+    <div class="modal-card">
+      <button class="modal-close" id="btn-close-cotizador" aria-label="Cerrar modal">&times;</button>
+      
+      <div class="modal-header">
+        <span class="modal-tag">Paso a Paso</span>
+        <h2 class="modal-title" id="cotizador-title">Cotizá tu Torta</h2>
+        <p class="modal-subtitle">Elegí tus ingredientes y calculá el precio aproximado al instante.</p>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-cotizador">
+          <!-- Paso 1: Tamaño -->
+          <div class="form-step">
+            <h3 class="step-title">1. Selecciona el Tamaño</h3>
+            <div class="option-grid" id="container-sizes">
+              <!-- Renderizado dinámico desde JS -->
+            </div>
+          </div>
+
+          <!-- Paso 2: Rellenos Especiales -->
+          <div class="form-step">
+            <h3 class="step-title">2. Agregados o Rellenos Premium</h3>
+            <p class="step-desc">Podés elegir uno o varios para hacerla única:</p>
+            <div class="option-list" id="container-fillings">
+              <!-- Renderizado dinámico desde JS -->
+            </div>
+          </div>
+
+          <!-- Paso 3: Diseño y Decoración -->
+          <div class="form-step">
+            <h3 class="step-title">3. Estilo de Diseño</h3>
+            <div class="option-grid" id="container-designs">
+              <!-- Renderizado dinámico desde JS -->
+            </div>
+          </div>
+
+          <!-- Paso 4: Fecha y Detalles -->
+          <div class="form-step">
+            <h3 class="step-title">4. Tu Pedido</h3>
+            <div class="form-group">
+              <label for="date-delivery">Fecha de Entrega ideal:</label>
+              <input type="date" id="date-delivery" class="input-field" required />
+              <span class="input-help-text" id="date-help"></span>
+            </div>
+            <div class="form-group">
+              <label for="order-notes">Notas / Diseños especiales (link de referencia o descripción):</label>
+              <textarea id="order-notes" class="input-field" rows="3" placeholder="Ej: Colores pasteles, temática de selva, añadir cartelito de feliz cumple..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="customer-name">Tu Nombre:</label>
+              <input type="text" id="customer-name" class="input-field" placeholder="Para saludarte al responderte" required />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-price-summary">
+          <span class="summary-label">Presupuesto Estimado</span>
+          <span class="summary-price" id="cotizador-total-price">$0</span>
+        </div>
+        <button type="button" class="btn btn-whatsapp" id="btn-submit-cotizador">
+          💬 Enviar Pedido a WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Pedidos de Precio Fijo -->
+  <div class="modal-backdrop" id="modal-pedido-fijo">
+    <div class="modal-card">
+      <button class="modal-close" id="btn-close-pedido-fijo" aria-label="Cerrar modal">&times;</button>
+      
+      <div class="modal-header">
+        <span class="modal-tag">Confirmar Pedido</span>
+        <h2 class="modal-title" id="fijo-title">Lemon Pie</h2>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-pedido-fijo">
+          <div class="form-group">
+            <label for="fijo-quantity">Cantidad:</label>
+            <select id="fijo-quantity" class="input-field">
+              <option value="1">1 Unidad</option>
+              <option value="2">2 Unidades</option>
+              <option value="3">3 Unidades</option>
+              <option value="4">4 Unidades</option>
+              <option value="5">5 Unidades o más</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fijo-date">Fecha de Retiro / Entrega:</label>
+            <input type="date" id="fijo-date" class="input-field" required />
+            <span class="input-help-text" id="fijo-date-help"></span>
+          </div>
+          <div class="form-group">
+            <label for="fijo-notes">Aclaraciones especiales (Ej: agregar dedicatoria):</label>
+            <textarea id="fijo-notes" class="input-field" rows="2" placeholder="Notas sobre el sabor, presentación o alergias..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="fijo-customer-name">Tu Nombre:</label>
+            <input type="text" id="fijo-customer-name" class="input-field" placeholder="Tu nombre" required />
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-price-summary">
+          <span class="summary-label">Total a Abonar</span>
+          <span class="summary-price" id="fijo-total-price">$0</span>
+        </div>
+        <button type="button" class="btn btn-whatsapp" id="btn-submit-pedido-fijo">
+          💬 Enviar Pedido a WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Pedidos Especiales/Bodas (Bajo Cotización) -->
+  <div class="modal-backdrop" id="modal-quote">
+    <div class="modal-card">
+      <button class="modal-close" id="btn-close-quote" aria-label="Cerrar modal">&times;</button>
+      
+      <div class="modal-header">
+        <span class="modal-tag">Diseño Exclusivo</span>
+        <h2 class="modal-title">Contanos sobre tu Evento</h2>
+        <p class="modal-subtitle">Ideal para mesas dulces, bodas de varios pisos o eventos de gran escala.</p>
+      </div>
+
+      <div class="modal-body">
+        <form id="form-quote">
+          <div class="form-group">
+            <label for="quote-guests">Cantidad de Invitados (aproximado):</label>
+            <input type="number" id="quote-guests" class="input-field" placeholder="Ej: 50 invitados" required />
+          </div>
+          <div class="form-group">
+            <label for="quote-date">Fecha del Evento:</label>
+            <input type="date" id="quote-date" class="input-field" required />
+            <span class="input-help-text" id="quote-date-help"></span>
+          </div>
+          <div class="form-group">
+            <label for="quote-details">¿Qué ideas tenés en mente? (Estilos, sabores, temáticas):</label>
+            <textarea id="quote-details" class="input-field" rows="4" placeholder="Ej: Torta de 3 pisos con flores naturales para boda rústica, 24 cupcakes surtidos, macarons color crema..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="quote-customer-name">Tu Nombre:</label>
+            <input type="text" id="quote-customer-name" class="input-field" placeholder="Tu nombre" required />
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-price-summary">
+          <span class="summary-label">Condición</span>
+          <span class="summary-price" style="font-size: 1.25rem;">Bajo Cotización Directa</span>
+        </div>
+        <button type="button" class="btn btn-whatsapp" id="btn-submit-quote">
+          💬 Consultar Presupuesto por WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer id="contacto" class="footer">
+    <div class="container footer-content text-center">
+      <div class="footer-logo">🌸 Los Dulces de Rosa</div>
+      <p class="footer-text">
+        Elaboramos pastelería fina de forma artesanal. Hacemos que tus celebraciones sean inolvidables.
+      </p>
+      
+      <div class="footer-info">
+        <p>📍 Retiros por: Palermo Soho, Buenos Aires</p>
+        <p>🕒 Horarios de atención: Martes a Sábados de 10:00 a 19:00 hs</p>
+        <p class="warning-text">⚠️ Recordá pedir con los días mínimos de anticipación indicados para asegurar disponibilidad.</p>
+      </div>
+
+      <div class="footer-divider"></div>
+      <p class="footer-copyright">&copy; {new Date().getFullYear()} Los Dulces de Rosa. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+</Layout>
+
+<!-- Estilos Scoped de la Página -->
+<style>
+  /* Header styling */
+  .header {
+    background-color: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .brand-logo-img {
+    height: 52px;
+    width: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid var(--color-primary-light);
+  }
+  
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .brand-name {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--color-primary-dark);
+  }
+  
+  .brand-subtitle {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+  }
+  
+  .btn-header {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+
+  /* Hero Section */
+  .hero {
+    padding: 60px 0 40px;
+    text-align: center;
+    background: radial-gradient(circle at top, var(--color-secondary-light) 0%, var(--color-bg-base) 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .hero-container {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hero-tagline {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 12px;
+  }
+  
+  .hero-title {
+    font-size: 2.8rem;
+    margin-bottom: 18px;
+  }
+  
+  .hero-description {
+    font-size: 1.05rem;
+    margin-bottom: 30px;
+    max-width: 580px;
+  }
+  
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .hero-badges {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    border-top: 1px dashed var(--color-border);
+    padding-top: 24px;
+    width: 100%;
+  }
+  
+  .hero-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+  }
+  
+  .badge-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Catálogo & Filtros */
+  .catalog-section {
+    padding: 70px 0;
+  }
+  
+  .section-header {
+    margin-bottom: 40px;
+  }
+  
+  .section-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-primary);
+  }
+  
+  .section-title {
+    font-size: 2.2rem;
+    margin: 6px 0 16px;
+  }
+  
+  .section-line {
+    width: 60px;
+    height: 3px;
+    background-color: var(--color-accent);
+    margin: 0 auto;
+    border-radius: var(--radius-full);
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  
+  .filter-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 40px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .filter-tab {
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 500;
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+  
+  .filter-tab:hover, .filter-tab.active {
+    background-color: var(--color-primary);
+    color: #FFFFFF;
+    border-color: var(--color-primary);
+  }
+  
+  .filter-tab-celiac {
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+  
+  .filter-tab-celiac:hover, .filter-tab-celiac.active {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: #FFFFFF;
+  }
+
+  /* Grid de Productos */
+  .products-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  @media (min-width: 640px) {
+    .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .products-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .product-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background-color: var(--color-secondary-light);
+  }
+  
+  .product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  
+  .product-card:hover .product-image {
+    transform: scale(1.05);
+  }
+  
+  .product-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .product-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  
+  .product-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .product-advance {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+  
+  .product-card-title {
+    font-size: 1.35rem;
+    margin-bottom: 8px;
+  }
+  
+  .product-card-desc {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+  
+  .product-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-border);
+    padding-top: 16px;
+  }
+  
+  .product-price-box {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .price-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+  
+  .price-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+  }
+  
+  .price-quote {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  
+  .btn-sm {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+
+  /* MODALS (Los Popups del Cotizador) */
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(61, 45, 32, 0.4); /* Backdrop café suave */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+    padding: 16px;
+  }
+  
+  .modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .modal-card {
+    background-color: var(--color-bg-surface);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform var(--transition-normal);
+  }
+  
+  .modal-backdrop.open .modal-card {
+    transform: translateY(0);
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--color-text-muted);
+    z-index: 10;
+  }
+  
+  .modal-close:hover {
+    color: var(--color-primary-dark);
+  }
+  
+  .modal-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .modal-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+  }
+  
+  .modal-title {
+    font-size: 1.6rem;
+    margin: 4px 0;
+  }
+  
+  .modal-subtitle {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+  
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  
+  .modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-base);
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  @media (min-width: 480px) {
+    .modal-footer {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  
+  .modal-price-summary {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .summary-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+  
+  .summary-price {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+  }
+
+  /* Form y opciones interactivos */
+  .form-step {
+    margin-bottom: 28px;
+  }
+  
+  .form-step:last-child {
+    margin-bottom: 0;
+  }
+  
+  .step-title {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+  
+  .step-desc {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+  
+  .option-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  @media (min-width: 400px) {
+    .option-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .option-card {
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-surface);
+  }
+  
+  .option-card:hover {
+    border-color: var(--color-accent);
+    background-color: var(--color-secondary-light);
+  }
+  
+  .option-card.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-secondary-light);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+  
+  .option-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+  }
+  
+  .option-price {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+  }
+  
+  .option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .option-row {
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--color-bg-surface);
+    transition: all var(--transition-fast);
+  }
+  
+  .option-row:hover {
+    border-color: var(--color-accent);
+  }
+  
+  .option-row.selected {
+    border-color: var(--color-primary);
+    background-color: var(--color-secondary-light);
+  }
+  
+  .option-row-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .option-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--color-border);
+    accent-color: var(--color-primary);
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--color-primary-dark);
+  }
+  
+  .input-help-text {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    color: var(--color-text-muted);
+  }
+  
+  .input-help-text.error {
+    color: #C0392B;
+    font-weight: 500;
+  }
+
+  /* Footer */
+  .footer {
+    background-color: var(--color-primary-dark);
+    color: var(--color-text-light);
+    padding: 60px 0 30px;
+    margin-top: auto;
+    border-top: 5px solid var(--color-accent);
+  }
+  
+  .footer-logo {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 14px;
+  }
+  
+  .footer-text {
+    max-width: 460px;
+    margin: 0 auto 30px;
+    color: rgba(250, 246, 240, 0.75);
+    font-size: 0.95rem;
+  }
+  
+  .footer-info {
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+  
+  .footer-info p {
+    color: rgba(250, 246, 240, 0.85);
+  }
+  
+  .warning-text {
+    color: var(--color-accent) !important;
+    font-weight: 600;
+  }
+  
+  .footer-divider {
+    height: 1px;
+    background-color: rgba(250, 246, 240, 0.15);
+    margin-bottom: 24px;
+  }
+  
+  .footer-copyright {
+    font-size: 0.75rem;
+    color: rgba(250, 246, 240, 0.5);
+  }
+</style>
+
+<!-- Lógica Interactiva (Vanilla JS para Filtros + Cotizador) -->
+<script define:vars={{ products, WHATSAPP_PHONE }}>
+  // variables globales inyectadas desde Astro: products, WHATSAPP_PHONE
+  let selectedProduct = null;
+  let quoteSize = null;
+  let quoteFillings = [];
+  let quoteDesign = null;
+
+  // --- SINCRONIZACIÓN CON GOOGLE SHEETS (OPCIONAL) ---
+  // Para activar, colocá la ID de tu planilla de Google Sheets.
+  // Ejemplo: const GOOGLE_SHEET_ID = "123456789X-Y_Z...";
+  // Dejalo vacío "" para usar solo la base local gestionada por Keystatic.
+  const GOOGLE_SHEET_ID = ""; 
+
+  if (GOOGLE_SHEET_ID) {
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
+    
+    fetch(csvUrl)
+      .then(res => {
+        if (!res.ok) throw new Error("Error de conexión");
+        return res.text();
+      })
+      .then(csvText => {
+        const rows = parseCSV(csvText);
+        rows.forEach(row => {
+          const productId = row.id;
+          if (!productId) return;
+          
+          // Actualizar la lista en memoria (para cálculos y reservas)
+          const product = products.find(p => p.id === productId);
+          if (product) {
+            if (row.precio !== undefined && row.precio !== "") {
+              product.precio = Number(row.precio);
+            }
+            if (row.diasAnticipacion !== undefined && row.diasAnticipacion !== "") {
+              product.diasAnticipacion = Number(row.diasAnticipacion);
+            }
+            if (row.aptoCelicos !== undefined && row.aptoCelicos !== "") {
+              product.aptoCelicos = row.aptoCelicos.toLowerCase() === 'true';
+            }
+            if (row.descripcion) {
+              product.descripcion = row.descripcion;
+            }
+            
+            // Actualizar la interfaz (DOM)
+            const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+            if (card) {
+              // Actualizar precio
+              const priceVal = card.querySelector('.price-value');
+              if (priceVal && product.tipoPrecio !== 'cotizar') {
+                priceVal.textContent = `$${product.precio.toLocaleString('es-AR')}`;
+              }
+              
+              // Actualizar descripción
+              const descVal = card.querySelector('.product-card-desc');
+              if (descVal && row.descripcion) {
+                descVal.textContent = row.descripcion;
+              }
+              
+              // Actualizar anticipación
+              const advanceVal = card.querySelector('.product-advance');
+              if (advanceVal) {
+                advanceVal.textContent = `⏱️ Min. ${product.diasAnticipacion} ${product.diasAnticipacion === 1 ? 'día' : 'días'}`;
+              }
+            }
+          }
+        });
+        console.log("¡Catálogo sincronizado exitosamente con Google Sheets!");
+      })
+      .catch(err => {
+        console.warn("Sincronización de Google Sheets fallida. Usando datos de Keystatic.", err);
+      });
+  }
+
+  // Analizador simple de CSV
+  function parseCSV(text) {
+    const lines = text.split('\n');
+    if (lines.length === 0) return [];
+    
+    const headers = lines[0].split(',').map(h => h.replace(/^["\r]+|["\r]+$/g, '').trim());
+    const result = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const row = [];
+      let currentField = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          row.push(currentField.replace(/^["\r]+|["\r]+$/g, '').trim());
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+      row.push(currentField.replace(/^["\r]+|["\r]+$/g, '').trim());
+      
+      const item = {};
+      headers.forEach((header, index) => {
+        if (row[index] !== undefined) {
+          item[header] = row[index];
+        }
+      });
+      result.push(item);
+    }
+    return result;
+  }
+
+  // --- FILTROS DEL CATÁLOGO ---
+  const filterTabs = document.querySelectorAll('.filter-tab');
+  const productCards = document.querySelectorAll('.product-card');
+
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Activar tab visualmente
+      filterTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const filterValue = tab.getAttribute('data-filter');
+
+      productCards.forEach(card => {
+        const category = card.getAttribute('data-category');
+        const isCeliac = card.getAttribute('data-celiac') === 'true';
+
+        if (filterValue === 'all') {
+          card.style.display = 'flex';
+        } else if (filterValue === 'celiac') {
+          card.style.display = isCeliac ? 'flex' : 'none';
+        } else {
+          card.style.display = category === filterValue ? 'flex' : 'none';
+        }
+      });
+    });
+  });
+
+  // --- CONTROL DE MODALES ---
+  const modalCotizador = document.getElementById('modal-cotizador');
+  const modalPedidoFijo = document.getElementById('modal-pedido-fijo');
+  const modalQuote = document.getElementById('modal-quote');
+
+  function openModal(modal) {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden'; // Evita scroll de fondo
+  }
+
+  function closeModal(modal) {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar al clickear fuera de la tarjeta modal
+  [modalCotizador, modalPedidoFijo, modalQuote].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal(modal);
+      }
+    });
+  });
+
+  // Botones de cerrar del modal
+  document.getElementById('btn-close-cotizador').addEventListener('click', () => closeModal(modalCotizador));
+  document.getElementById('btn-close-pedido-fijo').addEventListener('click', () => closeModal(modalPedidoFijo));
+  document.getElementById('btn-close-quote').addEventListener('click', () => closeModal(modalQuote));
+
+  // Configurar las fechas mínimas requeridas según anticipación
+  function setMinDate(dateInputEl, helpEl, minDays) {
+    const today = new Date();
+    today.setDate(today.getDate() + minDays);
+    
+    // Formatear a YYYY-MM-DD
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const minDateStr = `${yyyy}-${mm}-${dd}`;
+    
+    dateInputEl.setAttribute('min', minDateStr);
+    dateInputEl.value = minDateStr;
+    
+    if (helpEl) {
+      helpEl.textContent = `Se requiere un mínimo de ${minDays} ${minDays === 1 ? 'día' : 'días'} de anticipación para este pedido (Disponible desde: ${dd}/${mm}/${yyyy}).`;
+    }
+  }
+
+  // --- LOGICA DE EVENTOS DE BOTONES "PEDIR/PERSONALIZAR" ---
+  const actionButtons = document.querySelectorAll('.btn-order-action');
+  
+  actionButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const productId = btn.getAttribute('data-id');
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      selectedProduct = product;
+
+      if (product.tipoPrecio === 'dinamico') {
+        initCotizador(product);
+        openModal(modalCotizador);
+      } else if (product.tipoPrecio === 'fijo') {
+        initPedidoFijo(product);
+        openModal(modalPedidoFijo);
+      } else if (product.tipoPrecio === 'cotizar') {
+        initQuote(product);
+        openModal(modalQuote);
+      }
+    });
+  });
+
+  // Permitir abrir cotizador desde el botón del Hero
+  document.getElementById('btn-hero-customize').addEventListener('click', (e) => {
+    e.preventDefault();
+    const customizedCake = products.find(p => p.id === 'torta-personalizada');
+    if (customizedCake) {
+      selectedProduct = customizedCake;
+      initCotizador(customizedCake);
+      openModal(modalCotizador);
+    }
+  });
+
+  // --- INICIALIZADORES Y LOGICA DEL COTIZADOR DINAMICO ---
+  function initCotizador(product) {
+    document.getElementById('cotizador-title').textContent = product.nombre;
+    quoteFillings = [];
+    
+    // Configurar fecha
+    const dateInput = document.getElementById('date-delivery');
+    const dateHelp = document.getElementById('date-help');
+    setMinDate(dateInput, dateHelp, product.diasAnticipacion);
+
+    // Renderizar Tamaños
+    const containerSizes = document.getElementById('container-sizes');
+    containerSizes.innerHTML = '';
+    product.tamanos.forEach((size, idx) => {
+      const isSelected = idx === 0;
+      if (isSelected) quoteSize = size;
+
+      const card = document.createElement('div');
+      card.className = `option-card ${isSelected ? 'selected' : ''}`;
+      card.innerHTML = `
+        <span class="option-name">${size.nombre}</span>
+        <span class="option-price">$${size.precio.toLocaleString('es-AR')}</span>
+      `;
+      
+      card.addEventListener('click', () => {
+        containerSizes.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        quoteSize = size;
+        updateCotizadorTotal();
+      });
+
+      containerSizes.appendChild(card);
+    });
+
+    // Renderizar Rellenos
+    const containerFillings = document.getElementById('container-fillings');
+    containerFillings.innerHTML = '';
+    product.rellenos.forEach((filling) => {
+      const row = document.createElement('div');
+      row.className = 'option-row';
+      row.innerHTML = `
+        <div class="option-row-left">
+          <input type="checkbox" class="option-checkbox" />
+          <span class="option-name">${filling.nombre}</span>
+        </div>
+        <span class="option-price">${filling.precio > 0 ? `+$${filling.precio.toLocaleString('es-AR')}` : 'Sin costo adicional'}</span>
+      `;
+
+      row.addEventListener('click', (e) => {
+        const checkbox = row.querySelector('.option-checkbox');
+        // Si no clickeó directamente en el checkbox, lo toggleamos manualmente
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        
+        if (checkbox.checked) {
+          row.classList.add('selected');
+          quoteFillings.push(filling);
+        } else {
+          row.classList.remove('selected');
+          quoteFillings = quoteFillings.filter(f => f.nombre !== filling.nombre);
+        }
+        updateCotizadorTotal();
+      });
+
+      containerFillings.appendChild(row);
+    });
+
+    // Renderizar Diseños
+    const containerDesigns = document.getElementById('container-designs');
+    containerDesigns.innerHTML = '';
+    product.disenos.forEach((design, idx) => {
+      const isSelected = idx === 0;
+      if (isSelected) quoteDesign = design;
+
+      const card = document.createElement('div');
+      card.className = `option-card ${isSelected ? 'selected' : ''}`;
+      card.innerHTML = `
+        <span class="option-name">${design.nombre}</span>
+        <span class="option-price">${design.precio > 0 ? `+$${design.precio.toLocaleString('es-AR')}` : 'Sin costo adicional'}</span>
+      `;
+
+      card.addEventListener('click', () => {
+        containerDesigns.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        quoteDesign = design;
+        updateCotizadorTotal();
+      });
+
+      containerDesigns.appendChild(card);
+    });
+
+    updateCotizadorTotal();
+  }
+
+  function updateCotizadorTotal() {
+    let total = 0;
+    if (quoteSize) total += quoteSize.precio;
+    if (quoteDesign) total += quoteDesign.precio;
+    quoteFillings.forEach(f => total += f.precio);
+
+    document.getElementById('cotizador-total-price').textContent = `$${total.toLocaleString('es-AR')}`;
+  }
+
+  // --- INICIALIZADOR DE PEDIDO FIJO ---
+  function initPedidoFijo(product) {
+    document.getElementById('fijo-title').textContent = product.nombre;
+    
+    // Configurar fecha
+    const dateInput = document.getElementById('fijo-date');
+    const dateHelp = document.getElementById('fijo-date-help');
+    setMinDate(dateInput, dateHelp, product.diasAnticipacion);
+
+    const selectQty = document.getElementById('fijo-quantity');
+    selectQty.value = "1";
+
+    function updateFijoTotal() {
+      const qty = parseInt(selectQty.value);
+      const total = product.precio * qty;
+      document.getElementById('fijo-total-price').textContent = `$${total.toLocaleString('es-AR')}`;
+    }
+
+    selectQty.onchange = updateFijoTotal;
+    updateFijoTotal();
+  }
+
+  // --- INICIALIZADOR DE PEDIDO CONSULTA / BODA ---
+  function initQuote(product) {
+    const dateInput = document.getElementById('quote-date');
+    const dateHelp = document.getElementById('quote-date-help');
+    setMinDate(dateInput, dateHelp, product.diasAnticipacion);
+  }
+
+  // --- ENVIAR PEDIDOS A WHATSAPP ---
+
+  // 1. Submit Cotizador Dinámico
+  document.getElementById('btn-submit-cotizador').addEventListener('click', () => {
+    const name = document.getElementById('customer-name').value.trim();
+    const date = document.getElementById('date-delivery').value;
+    const notes = document.getElementById('order-notes').value.trim();
+
+    if (!name) {
+      alert("Por favor ingresá tu nombre para que sepamos con quién hablar.");
+      return;
+    }
+    if (!date) {
+      alert("Por favor elegí una fecha de entrega.");
+      return;
+    }
+
+    // Calcular total final
+    let total = 0;
+    if (quoteSize) total += quoteSize.precio;
+    if (quoteDesign) total += quoteDesign.precio;
+    quoteFillings.forEach(f => total += f.precio);
+
+    // Formatear Fecha para el mensaje
+    const dateParts = date.split('-');
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+    // Construir mensaje
+    let message = `¡Hola! Me gustaría cotizar un pedido para mi celebración:\n\n`;
+    message += `🍰 *Producto:* ${selectedProduct.nombre}\n`;
+    message += `📏 *Tamaño:* ${quoteSize.nombre}\n`;
+    
+    if (quoteFillings.length > 0) {
+      message += `🍯 *Relleno(s) Especial(es):*\n`;
+      quoteFillings.forEach(f => {
+        message += `  - ${f.nombre}\n`;
+      });
+    } else {
+      message += `🍯 *Rellenos:* Estándar a convenir\n`;
+    }
+    
+    message += `🎨 *Estilo de Diseño:* ${quoteDesign.nombre}\n`;
+    message += `📅 *Fecha solicitada:* ${formattedDate}\n`;
+    if (notes) message += `📝 *Aclaraciones:* "${notes}"\n`;
+    message += `👤 *Mi Nombre:* ${name}\n\n`;
+    message += `💰 *Presupuesto Estimado:* $${total.toLocaleString('es-AR')} ARS\n\n`;
+    message += `¿Tienen disponibilidad para esta fecha? ¡Muchas gracias!`;
+
+    sendWhatsapp(message);
+    closeModal(modalCotizador);
+  });
+
+  // 2. Submit Pedido Fijo
+  document.getElementById('btn-submit-pedido-fijo').addEventListener('click', () => {
+    const name = document.getElementById('fijo-customer-name').value.trim();
+    const date = document.getElementById('fijo-date').value;
+    const qty = parseInt(document.getElementById('fijo-quantity').value);
+    const notes = document.getElementById('fijo-notes').value.trim();
+
+    if (!name) {
+      alert("Por favor ingresá tu nombre.");
+      return;
+    }
+    if (!date) {
+      alert("Por favor elegí la fecha.");
+      return;
+    }
+
+    const total = selectedProduct.precio * qty;
+    const dateParts = date.split('-');
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+    let message = `¡Hola! Me gustaría hacer un pedido fijo:\n\n`;
+    message += `🥧 *Producto:* ${selectedProduct.nombre}\n`;
+    message += `🛍️ *Cantidad:* ${qty} ${qty === 1 ? 'unidad' : 'unidades'}\n`;
+    message += `📅 *Fecha de Retiro:* ${formattedDate}\n`;
+    if (notes) message += `📝 *Notas:* "${notes}"\n`;
+    message += `👤 *Mi Nombre:* ${name}\n\n`;
+    message += `💰 *Total a Abonar:* $${total.toLocaleString('es-AR')} ARS\n\n`;
+    message += `¿Me confirman la reserva del pedido? ¡Muchas gracias!`;
+
+    sendWhatsapp(message);
+    closeModal(modalPedidoFijo);
+  });
+
+  // 3. Submit Pedido Bajo Cotización (Bodas/Eventos)
+  document.getElementById('btn-submit-quote').addEventListener('click', () => {
+    const name = document.getElementById('quote-customer-name').value.trim();
+    const date = document.getElementById('quote-date').value;
+    const guests = document.getElementById('quote-guests').value.trim();
+    const details = document.getElementById('quote-details').value.trim();
+
+    if (!name) {
+      alert("Por favor ingresá tu nombre.");
+      return;
+    }
+    if (!date) {
+      alert("Por favor elegí la fecha del evento.");
+      return;
+    }
+    if (!details) {
+      alert("Por favor detallanos un poco qué tenés en mente.");
+      return;
+    }
+
+    const dateParts = date.split('-');
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+    let message = `¡Hola! Me comunico para cotizar un Pedido Especial o de Boda:\n\n`;
+    message += `✨ *Tipo de Evento/Pedido:* ${selectedProduct.nombre}\n`;
+    message += `👥 *Invitados aproximados:* ${guests}\n`;
+    message += `📅 *Fecha del Evento:* ${formattedDate}\n`;
+    message += `📝 *Detalles de lo que tengo en mente:*\n"${details}"\n\n`;
+    message += `👤 *Mi Nombre:* ${name}\n\n`;
+    message += `Espero su asesoramiento para armar la mesa dulce de mis sueños. ¡Gracias!`;
+
+    sendWhatsapp(message);
+    closeModal(modalQuote);
+  });
+
+  // Abre la URL de WhatsApp
+  function sendWhatsapp(text) {
+    const encodedText = encodeURIComponent(text);
+    const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodedText}`;
+    window.open(url, '_blank');
+  }
+</script>
